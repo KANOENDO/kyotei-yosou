@@ -4,7 +4,8 @@
 入力  : data/schedule_YYYYMMDD.json (朝の回が作成) と kyotei_log.csv (「未確定」行)
 出力  : JSON。action = NO_ACTION | FINALIZE
   targets : 今回確定するレース(締切が now+MIN_MARGIN より後、now+WINDOW 以内)
-  expired : 未確定のまま締切が now+MIN_MARGIN 以前になったレース(購入なしとして記録する)
+  expired : 未確定のまま締切が now+MIN_MARGIN 以前になったレース(仮買い目があればそれを確定、無ければ購入なしとして記録する)
+  各レースの "provisional" に朝の回の仮買い目(無ければ空)を入れる
   all_done: 未確定のレースが残っていなければ true
 """
 import csv, json, sys, datetime, os
@@ -27,13 +28,15 @@ def main():
         print(json.dumps({"action": "NO_ACTION", "reason": "schedule無し(朝の回未実行または対象場なし)"}, ensure_ascii=False)); return
     sch = json.load(open(sp, encoding="utf-8"))
     date = f"{ymd[:4]}-{ymd[4:6]}-{ymd[6:]}"
-    pending = set()
+    pending = set(); prov = {}
     for row in csv.reader(open(os.path.join(base, "kyotei_log.csv"), encoding="utf-8-sig")):
-        if row and row[0] == date and row[1] == sch["venue"] and row[5].startswith("未確定"):
+        if row and row[0] == date and row[1] == sch["venue"] and (row[5].startswith("未確定") or row[5].startswith("仮")):
             pending.add(int(row[2]))
+            if row[5].startswith("仮"): prov[int(row[2])] = row[5]
     targets, expired = [], []
     for r in sch["races"]:
         if r["r"] not in pending: continue
+        r["provisional"] = prov.get(r["r"], "")
         d = hm(r["deadline"])
         if d <= now + MIN_MARGIN: expired.append(r)
         elif d <= now + WINDOW: targets.append(r)
