@@ -11,8 +11,8 @@
 
 | ルーティン | 実行タイミング | 役割 |
 | --- | --- | --- |
-| 朝の回 | 毎日 8:00（JST） | 前日の結果検証、当日全レースの予想（本命・対抗・自信度）、オッズを使わない仮買い目の作成、締切スケジュールの保存 |
-| 確定の回 | 30分ごと | 締切の約40分前〜4分前のレースについて、展示・進入・天候などの直前情報と最新オッズで買い目を修正・確定 |
+| 朝の回 | 毎日 8:00（JST） | 前日の結果検証、モデルv2による当日全レースの予想（1着確率・本命・対抗・自信度）、オッズを使わない仮買い目の作成、締切スケジュールの保存 |
+| 確定の回 | 10分ごと | 締切の約14分前〜4分前（展示タイム公表後）のレースについて、展示・進入・風波を入れてモデルv2を再計算し、最新オッズで買い目を確定。オッズ120通りを data/odds/ に保存 |
 
 対象場は大村・徳山・下関です。1日1回、検証結果と改善案を Discord に通知します（改善案は提案のみで、ルールやコードは自動では変更しません）。
 
@@ -49,9 +49,13 @@ python3 tools/kfiles.py build                     # 成績データから race_h
 python3 tools/kfiles.py recent 登番 [登番...]      # 選手の直近10走を表示
 python3 tools/kfiles.py payout YYYYMMDD 場コード   # その日の払戻金一覧を表示
 python3 tools/backtest_v2.py                      # モデルv2のバックテスト
+python3 tools/train_v2.py                         # 運用用の重み(data/model_v2_live.json)を再学習（月1回程度）
+python3 tools/predict_v2.py morning YYYYMMDD 場コード  # 朝の予想・仮買い目
+python3 tools/predict_v2.py final YYYYMMDD R [--apply] # 展示込みの最終予想・買い目の確定
+python3 tools/verify.py YYYYMMDD                  # 前日の検証（結果・払戻の転記と集計）
 ```
 
-ファン手帳の展開に `lhafile` が必要です（`pip install lhafile`）。Discord 通知を使う場合は環境変数 `DISCORD_WEBHOOK_URL` を設定してください。
+ファン手帳の展開に `lhafile`、モデルに `numpy` が必要です（`pip install lhafile numpy`）。Discord 通知を使う場合は環境変数 `DISCORD_WEBHOOK_URL` を設定してください。
 
 ## 注意
 

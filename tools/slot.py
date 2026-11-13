@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """確定の回用: 今回の実行で購入を確定すべきレースを判定する。
-使い方: python3 tools/slot.py YYYYMMDD [--now HH:MM]   (時刻はJST。省略時は現在のJST)
+使い方: python3 tools/slot.py YYYYMMDD [--now HH:MM] [--window 分]   (時刻はJST。省略時は現在のJST。--window 省略時は40分)
 入力  : data/schedule_YYYYMMDD.json (朝の回が作成) と kyotei_log.csv (「未確定」行)
 出力  : JSON。action = NO_ACTION | FINALIZE
   targets : 今回確定するレース(締切が now+MIN_MARGIN より後、now+WINDOW 以内)
@@ -18,6 +18,8 @@ def hm(s):
 
 def main():
     ymd = sys.argv[1]
+    global WINDOW
+    if "--window" in sys.argv: WINDOW = int(sys.argv[sys.argv.index("--window") + 1])
     if "--now" in sys.argv:
         now = hm(sys.argv[sys.argv.index("--now") + 1])
     else:
